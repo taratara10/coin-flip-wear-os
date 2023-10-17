@@ -4,13 +4,12 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -20,40 +19,82 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
-@Composable
-fun FlipCoin() {
-    var doFlip by remember { mutableStateOf(false) }
-    var flipRotation by remember { mutableFloatStateOf(0f) }
-    val animationSpec = tween<Float>(3000, easing = CubicBezierEasing(0.4f, 0.0f, 0.8f, 0.8f))
+sealed interface CoinState {
+    object Wait : CoinState
 
-    LaunchedEffect(doFlip) {
+    data class Rotating(
+        val rotationTimes: Int,
+        val onComplete: () -> Unit,
+    ) : CoinState {
+        val targetRotation = 360f * rotationTimes
+        val durationMillis  =  1000 * rotationTimes
+    }
+}
+
+@Composable
+fun CoinRoute(
+    state: CoinState,
+) {
+    when (state) {
+        CoinState.Wait -> {
+            Circle()
+        }
+
+        is CoinState.Rotating -> {
+            RotatingCoin(
+                targetRotation = state.targetRotation,
+                durationMillis = state.durationMillis,
+                onComplete = {
+                    state.onComplete()
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun RotatingCoin(
+    targetRotation: Float,
+    durationMillis: Int,
+    onComplete: () -> Unit,
+) {
+    var currentRotation by remember { mutableFloatStateOf(0f) }
+    
+    val isFront by remember {
+        derivedStateOf { isFront(currentRotation) }
+    }
+    
+    val animationSpec = tween<Float>(
+        durationMillis = durationMillis,
+        easing = CubicBezierEasing(0.4f, 0.0f, 0.8f, 0.8f)
+    )
+
+    LaunchedEffect(targetRotation) {
         animate(
             initialValue = 0f,
-            targetValue = 360f,
+            targetValue = targetRotation,
             animationSpec = animationSpec,
         ) { value: Float, _: Float ->
-            flipRotation = value
+            currentRotation = value
+            if (value == targetRotation) {
+                onComplete()
+            }
         }
     }
 
-    val modifier = Modifier
-        .graphicsLayer(
-            rotationY = flipRotation,
-            cameraDistance = 10 * LocalDensity.current.density
-        )
-
     Circle(
-        modifier = modifier
-            .clickable {
-                       doFlip = !doFlip
-            },
-        color = when {
-            flipRotation < 90f -> Color.Red
-            flipRotation < 180f -> Color.Blue
-            flipRotation < 270f -> Color.Blue
-            else -> Color.Red
-        }
+        modifier = Modifier
+            .graphicsLayer(
+                rotationY = currentRotation,
+                cameraDistance = 10 * LocalDensity.current.density
+            ),
+        color = if (isFront) Color.Red else Color.Blue
     )
+}
+
+fun isFront(angle: Float): Boolean {
+    val value = angle % 360
+    return value < 90f || value >= 270f
 }
 
 // todo material Youのcolorとか使える？
@@ -78,5 +119,9 @@ private fun PreviewCircle() {
 @Preview
 @Composable
 fun PreviewFlipCoin() {
-    FlipCoin()
+    RotatingCoin(
+        onComplete = {},
+        targetRotation = 720f,
+        durationMillis = 5000
+    )
 }
