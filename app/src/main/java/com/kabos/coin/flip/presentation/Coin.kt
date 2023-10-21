@@ -5,6 +5,8 @@ import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,13 +32,15 @@ sealed interface CoinUiState {
     ) : CoinUiState
 
     data class Rotating(
-        val isFront: Boolean,
+        val isFrontAtInitial: Boolean,
+        val isFrontAtEnd: Boolean,
         val onComplete: () -> Unit,
     ) : CoinUiState {
         private val numberOfRotation = (4..6).random()
-        private val additionalRotation = if (isFront) 0f else 180f
+        private val additionalRotation = if (isFrontAtEnd) 0f else 180f
+        val initialRotation = if (isFrontAtInitial) 0f else 180f
         val targetRotation = (360f * numberOfRotation) + additionalRotation
-        val durationMillis = 1000 * numberOfRotation
+        val durationMillis = 500 * numberOfRotation
     }
 }
 
@@ -57,6 +61,7 @@ fun CoinRoute(
 
         is CoinUiState.Rotating -> {
             RotatingCoin(
+                initialRotation = state.initialRotation,
                 targetRotation = state.targetRotation,
                 durationMillis = state.durationMillis,
                 onComplete = {
@@ -69,6 +74,7 @@ fun CoinRoute(
 
 @Composable
 private fun RotatingCoin(
+    initialRotation: Float,
     targetRotation: Float,
     durationMillis: Int,
     onComplete: () -> Unit,
@@ -86,7 +92,7 @@ private fun RotatingCoin(
 
     LaunchedEffect(targetRotation) {
         animate(
-            initialValue = 0f,
+            initialValue = initialRotation,
             targetValue = targetRotation,
             animationSpec = animationSpec,
         ) { value: Float, _: Float ->
@@ -119,7 +125,9 @@ private fun Circle(
     color: Color = Color.Red,
 ) {
     Canvas(
-        modifier = modifier.size(50.dp),
+//        modifier = modifier.size(50.dp),
+        modifier = modifier.fillMaxSize()
+            .padding(32.dp),
     ) {
         drawCircle(color = color)
     }
@@ -136,6 +144,7 @@ private fun PreviewCircle() {
 fun PreviewFlipCoin() {
     RotatingCoin(
         onComplete = {},
+        initialRotation = 0f,
         targetRotation = 720f,
         durationMillis = 5000
     )

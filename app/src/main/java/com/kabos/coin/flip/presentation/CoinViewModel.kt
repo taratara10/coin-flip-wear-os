@@ -20,16 +20,19 @@ class CoinViewModel : ViewModel() {
         _uiState.update {
             CoinUiState.Wait(
                 isFront = isFront,
-                onClick = ::flip
+                onClick = {
+                    flip(displayingSurface = isFront)
+                }
             )
         }
     }
 
-    private fun flip() {
+    private fun flip(displayingSurface: Boolean) {
         val randomBoolean = Random.nextBoolean()
         _uiState.update {
             CoinUiState.Rotating(
-                isFront = randomBoolean,
+                isFrontAtInitial = displayingSurface,
+                isFrontAtEnd = randomBoolean,
                 onComplete = {
                     setup(isFront = randomBoolean)
                 }
