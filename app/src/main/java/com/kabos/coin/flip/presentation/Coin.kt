@@ -4,9 +4,11 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -19,28 +21,41 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
-sealed interface CoinState {
-    object Wait : CoinState
+sealed interface CoinUiState {
+    object Loading: CoinUiState
+
+    data class Wait(
+        val isFront: Boolean,
+        val onClick: () -> Unit,
+    ) : CoinUiState
 
     data class Rotating(
-        val rotationTimes: Int,
+        val isFront: Boolean,
         val onComplete: () -> Unit,
-    ) : CoinState {
-        val targetRotation = 360f * rotationTimes
-        val durationMillis  =  1000 * rotationTimes
+    ) : CoinUiState {
+        private val numberOfRotation = (4..6).random()
+        private val additionalRotation = if (isFront) 0f else 180f
+        val targetRotation = (360f * numberOfRotation) + additionalRotation
+        val durationMillis = 1000 * numberOfRotation
     }
 }
 
 @Composable
 fun CoinRoute(
-    state: CoinState,
+    viewModel: CoinViewModel,
 ) {
-    when (state) {
-        CoinState.Wait -> {
-            Circle()
+    when (val state = viewModel.uiState.collectAsState().value) {
+        CoinUiState.Loading -> Unit
+
+        is CoinUiState.Wait -> {
+            Circle(
+                modifier = Modifier
+                    .clickable { state.onClick() },
+                color = if (state.isFront) Color.Red else Color.Blue
+            )
         }
 
-        is CoinState.Rotating -> {
+        is CoinUiState.Rotating -> {
             RotatingCoin(
                 targetRotation = state.targetRotation,
                 durationMillis = state.durationMillis,
@@ -59,11 +74,11 @@ private fun RotatingCoin(
     onComplete: () -> Unit,
 ) {
     var currentRotation by remember { mutableFloatStateOf(0f) }
-    
+
     val isFront by remember {
         derivedStateOf { isFront(currentRotation) }
     }
-    
+
     val animationSpec = tween<Float>(
         durationMillis = durationMillis,
         easing = CubicBezierEasing(0.4f, 0.0f, 0.8f, 0.8f)

@@ -9,6 +9,7 @@ package com.kabos.coin.flip.presentation
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -28,6 +29,9 @@ import com.kabos.coin.flip.R
 import com.kabos.coin.flip.presentation.theme.CoinFlipTheme
 
 class MainActivity : ComponentActivity() {
+
+    private val viewModel: CoinViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
 
@@ -36,13 +40,15 @@ class MainActivity : ComponentActivity() {
         setTheme(android.R.style.Theme_DeviceDefault)
 
         setContent {
-            WearApp("Android")
+            WearApp(viewModel = viewModel)
         }
     }
 }
 
 @Composable
-fun WearApp(greetingName: String) {
+fun WearApp(
+    viewModel: CoinViewModel
+) {
     CoinFlipTheme {
         Box(
             modifier = Modifier
@@ -51,23 +57,7 @@ fun WearApp(greetingName: String) {
             contentAlignment = Alignment.Center
         ) {
             TimeText()
-            Greeting(greetingName = greetingName)
+            CoinRoute(viewModel = viewModel)
         }
     }
-}
-
-@Composable
-fun Greeting(greetingName: String) {
-    Text(
-        modifier = Modifier.fillMaxWidth(),
-        textAlign = TextAlign.Center,
-        color = MaterialTheme.colors.primary,
-        text = stringResource(R.string.hello_world, greetingName)
-    )
-}
-
-@Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
-@Composable
-fun DefaultPreview() {
-    WearApp("Preview Android")
 }
