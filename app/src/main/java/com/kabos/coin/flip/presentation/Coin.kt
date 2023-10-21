@@ -22,6 +22,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.wear.compose.material.MaterialTheme
+
+val frontColor = Color.Red
+val backColor = Color.Blue
 
 sealed interface CoinUiState {
     object Loading: CoinUiState
@@ -36,7 +40,7 @@ sealed interface CoinUiState {
         val isFrontAtEnd: Boolean,
         val onComplete: () -> Unit,
     ) : CoinUiState {
-        private val numberOfRotation = (3..5).random()
+        private val numberOfRotation = (3..4).random()
         private val additionalRotation = if (isFrontAtEnd) 0f else 180f
         val initialRotation = if (isFrontAtInitial) 0f else 180f
         val targetRotation = (360f * numberOfRotation) + additionalRotation
@@ -55,7 +59,7 @@ fun CoinRoute(
             Circle(
                 modifier = Modifier
                     .clickable { state.onClick() },
-                color = if (state.isFront) Color.Red else Color.Blue
+                color = if (state.isFront) frontColor else backColor
             )
         }
 
@@ -109,7 +113,7 @@ private fun RotatingCoin(
                 rotationY = currentRotation,
                 cameraDistance = 10 * LocalDensity.current.density
             ),
-        color = if (isFront) Color.Red else Color.Blue
+        color = if (isFront) frontColor else backColor
     )
 }
 
@@ -118,15 +122,14 @@ fun isFront(angle: Float): Boolean {
     return value < 90f || value >= 270f
 }
 
-// todo material Youのcolorとか使える？
 @Composable
 private fun Circle(
     modifier: Modifier = Modifier,
-    color: Color = Color.Red,
+    color: Color = frontColor,
 ) {
     Canvas(
-//        modifier = modifier.size(50.dp),
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
             .padding(32.dp),
     ) {
         drawCircle(color = color)
@@ -134,12 +137,6 @@ private fun Circle(
 }
 
 @Preview(showBackground = true)
-@Composable
-private fun PreviewCircle() {
-    Circle(modifier = Modifier.size(50.dp))
-}
-
-@Preview
 @Composable
 fun PreviewFlipCoin() {
     RotatingCoin(
