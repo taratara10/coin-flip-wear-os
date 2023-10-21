@@ -36,11 +36,11 @@ sealed interface CoinUiState {
         val isFrontAtEnd: Boolean,
         val onComplete: () -> Unit,
     ) : CoinUiState {
-        private val numberOfRotation = (4..6).random()
+        private val numberOfRotation = (3..5).random()
         private val additionalRotation = if (isFrontAtEnd) 0f else 180f
         val initialRotation = if (isFrontAtInitial) 0f else 180f
         val targetRotation = (360f * numberOfRotation) + additionalRotation
-        val durationMillis = 500 * numberOfRotation
+        val durationMillis = 1000 * numberOfRotation
     }
 }
 
@@ -87,7 +87,7 @@ private fun RotatingCoin(
 
     val animationSpec = tween<Float>(
         durationMillis = durationMillis,
-        easing = CubicBezierEasing(0.4f, 0.0f, 0.8f, 0.8f)
+        easing = CubicBezierEasing(0.22f, 1f, 0.36f, 1f)
     )
 
     LaunchedEffect(targetRotation) {
